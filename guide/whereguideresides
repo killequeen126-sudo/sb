@@ -1,4 +1,4 @@
-local scripturl = "https://raw.githubusercontent.com/killequeen126-sudo/slapbattles/refs/heads/main/guide/1234"
+local scripturl = "https://raw.githubusercontent.com/killequeen126-sudo/sb/refs/heads/main/guide/12345"
 
 if game.GameId ~= 2380077519 and game.PlaceId ~= 18550498098 then
     return
