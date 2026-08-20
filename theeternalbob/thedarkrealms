@@ -1,0 +1,141 @@
+if game.PlaceId ~= 13833961666 then 
+    return 
+end
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("The Dark Realms | by liaqe", "GrapeTheme")
+
+local ScriptsTab = Window:NewTab("Scripts")
+local MiscTab = Window:NewTab("Misc")
+local CombatTab = Window:NewTab("Combat")
+local AntiTab = Window:NewTab("Anti")
+
+local ScriptsSection = ScriptsTab:NewSection("Scripts")
+local MiscSection = MiscTab:NewSection("Tycoon")
+local CombatSection = CombatTab:NewSection("Damage Boss")
+local CombatSSection = CombatTab:NewSection("Slap Bob Mini")
+local AntiSection = AntiTab:NewSection("Anti's")
+local RemoveSection = AntiTab:NewSection("Remove")
+
+ScriptsSection:NewButton("Fly", "Execute Fly", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/killequeen126-sudo/slapbattles/refs/heads/main/rob/fly"))()
+end)
+
+ScriptsSection:NewButton("Simple Spy", "Execute Simple Spy", function()
+    loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpyBeta.lua"))()
+end)
+
+ScriptsSection:NewButton("Dex Explorer ++", "Execute Dex Explorer ++", function()
+    loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/download/stable-3.0/out.lua"))()
+end)
+
+MiscSection:NewToggle("Auto Click Tycoon", "Clicking Button On Tycoon", function(state)
+    _G.AutoTycoonEnabled = state
+    if _G.AutoTycoonEnabled then
+        local clickDetectorObj = nil
+
+        for _, object in pairs(workspace:GetChildren()) do
+            if string.find(object.Name, '\u{c5}Tycoon') then 
+                if object:FindFirstChild("Click") and object.Click:FindFirstChildOfClass("ClickDetector") then
+                    clickDetectorObj = object.Click:FindFirstChildOfClass("ClickDetector")
+                end
+                break
+            end
+        end
+
+        task.spawn(function()
+            while _G.AutoTycoonEnabled do
+                if clickDetectorObj then
+                    fireclickdetector(clickDetectorObj, 0)
+                    fireclickdetector(clickDetectorObj, 1)
+                end
+                task.wait()
+            end
+        end)
+    end
+end)
+
+CombatSection:NewToggle("Damage Boss", "Auto Slaping The Eternal Bob", function(state)
+    _G.DamageBossToggle = state
+    task.spawn(function()
+        while _G.DamageBossToggle do
+            if game.Workspace:FindFirstChild('bobBoss') then 
+                game.Workspace.bobBoss.DamageEvent:FireServer() 
+            end
+            task.wait()
+        end
+    end)
+end)
+
+CombatSSection:NewButton("Slap Bob Mini", "Slaps all current Bob Mini once", function()
+    if game.Workspace:FindFirstChild('BobClone') then
+        local leaderstats = game.Players.LocalPlayer:FindFirstChild("leaderstats")
+        local currentGlove = leaderstats and leaderstats:FindFirstChild("Glove") and leaderstats.Glove.Value
+
+        for _, object in pairs(workspace:GetChildren()) do
+            if object.Name == 'BobClone' and object:FindFirstChild('HumanoidRootPart') then
+                local targetPart = object.HumanoidRootPart
+                
+                if currentGlove == 'Killstreak' then
+                    game:GetService('ReplicatedStorage').KSHit:FireServer(targetPart)
+                elseif currentGlove == 'Reaper' then
+                    game:GetService('ReplicatedStorage').ReaperHit:FireServer(targetPart)
+                elseif currentGlove == "God's Hand" then
+                    game:GetService('ReplicatedStorage').Godshand:FireServer(targetPart)
+                elseif currentGlove == 'Tycoon' then
+                    game:GetService('ReplicatedStorage').GeneralHit:FireServer(targetPart)
+                end
+            end
+        end
+    end
+end)
+
+AntiSection:NewToggle("Anti-Afk", "Disables idle kick from Roblox", function(state)
+    _G.AntiAfkActive = state
+    for _, connection in next, getconnections(game.Players.LocalPlayer.Idled) do
+        if _G.AntiAfkActive then
+            connection:Disable()
+        else
+            connection:Enable()
+        end
+    end
+end)
+
+AntiSection:NewToggle("Anti-Ring", "Automatically destroys The Eternal Bob's shockwaves", function(state)
+    _G.AntiRingActive = state
+    task.spawn(function()
+        while _G.AntiRingActive do
+            if game.Workspace:FindFirstChild('Ring') then 
+                game.Workspace:FindFirstChild('Ring'):Destroy() 
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+AntiSection:NewToggle("Anti Void", "Creates a platform under the arena to prevent falling", function(state)
+    if state then
+        local platform = Instance.new('Part')
+        platform.Name = 'Anti Void Bob'
+        platform.Size = Vector3.new(2500, 16, 1140)
+        platform.Transparency = 0.4
+        platform.CanCollide = true
+        platform.Anchored = true
+        platform.CFrame = CFrame.new(0, -8, -43, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+        platform.Parent = game.Workspace
+    else
+        local platform = game.Workspace:FindFirstChild('Anti Void Bob')
+        if platform then
+            platform:Destroy()
+        end
+    end
+end)
+
+RemoveSection:NewButton("Remove VFX", "Removes VFX", function()
+if game.Players.LocalPlayer.PlayerScripts:FindFirstChild('VFXListener') then 
+        game.Players.LocalPlayer.PlayerScripts.VFXListener:Destroy() 
+    end
+    if game.Players.LocalPlayer.PlayerScripts:FindFirstChild('Screenshake') then 
+        game.Players.LocalPlayer.PlayerScripts.Screenshake:Destroy() 
+    end
+end)
