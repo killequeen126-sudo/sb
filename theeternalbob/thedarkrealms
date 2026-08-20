@@ -18,7 +18,7 @@ local AntiSection = AntiTab:NewSection("Anti's")
 local RemoveSection = AntiTab:NewSection("Remove")
 
 ScriptsSection:NewButton("Fly", "Execute Fly", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/killequeen126-sudo/slapbattles/refs/heads/main/rob/fly"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/killequeen126-sudo/sb/refs/heads/main/theeternalbob/flyv3"))()
 end)
 
 ScriptsSection:NewButton("Simple Spy", "Execute Simple Spy", function()
