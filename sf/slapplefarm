@@ -1,0 +1,213 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local players = game:GetService("Players")
+local teleportS = game:GetService("TeleportService")
+local httpS = game:GetService("HttpService")
+local Vuser = game:GetService("VirtualUser")
+local plr = players.LocalPlayer
+
+local placeid = game.PlaceId
+local jobid = game.JobId
+
+local txt = "slapple_visited_servers.txt"
+local visited = {}
+local hoppingstatus = false
+local cursor = ""
+
+local check = (type(writefile) == "function" and type(readfile) == "function" and type(isfile) == "function")
+
+if check then
+    pcall(function()
+        if not isfile(txt) then
+            writefile(txt, "")
+        else
+            for lineintxt in readfile(txt):gmatch("[^\r\n]+") do
+                local servercheck = lineintxt:gsub("%s+", "")
+                if servercheck ~= "" then
+                    visited[servercheck] = true
+                end
+            end
+        end
+    end)
+end
+
+local function log(serverid)
+    if not serverid or serverid == "" then return end
+    if visited[serverid] then return end
+    visited[serverid] = true
+    if check and appendfile then
+        pcall(appendfile, txt, serverid .. "\n")
+    end
+end
+
+log(jobid)
+
+local function getpage()
+    local sort = (math.random(1, 2) == 1) and "Desc" or "Asc"
+    local url
+    if cursor == "" then
+        url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100", placeid, sort)
+    else
+        url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100&cursor=%s", placeid, sort, cursor)
+    end
+
+    local status, response = pcall(function()
+        return httpS:JSONDecode(game:HttpGet(url))
+    end)
+    
+    if not status or not response or not response.data then
+        return nil
+    end
+    
+    if response.nextPageCursor and response.nextPageCursor ~= "null" then
+        cursor = response.nextPageCursor
+    else
+        cursor = ""
+    end
+    
+    return response.data
+end
+
+local function findserver()
+    local any = {}
+    
+    for _ = 1, 6 do
+        local data = getpage()
+        if data then
+            local new = {}
+            for _, servercheck in ipairs(data) do
+                local serverid = tostring(servercheck.id)           
+                if serverid ~= jobid and type(servercheck.playing) == "number" and servercheck.playing >= 1 and servercheck.playing < (servercheck.maxPlayers or 15) then
+                    table.insert(any, servercheck)
+                    if not visited[serverid] then
+                        table.insert(new, servercheck)
+                    end
+                end
+            end
+
+            if #new > 0 then
+                return new[math.random(1, #new)]
+            end
+        end
+        task.wait(0.3)
+    end
+    
+    if #any > 0 then
+        return any[math.random(1, #any)]
+    end
+    
+    return nil
+end
+
+local function hop()
+    if hoppingstatus then return end
+    hoppingstatus = true
+
+    local target = findserver()
+    
+    if target then
+        log(tostring(target.id))
+        pcall(function()
+            teleportS:TeleportToPlaceInstance(placeid, target.id, plr)
+        end)
+    else
+        pcall(function()
+            teleportS:Teleport(placeid, plr)
+        end)
+    end
+end
+
+teleportS.TeleportInitFailed:Connect(function(rperror)
+    if rperror == plr then
+        hoppingstatus = false
+        task.wait(2.5)
+        hop()
+    end
+end)
+
+plr.Idled:Connect(function()
+    Vuser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    Vuser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
+
+local function getchar()
+    repeat task.wait() until plr.Character
+    repeat task.wait() until plr.Character:FindFirstChild("HumanoidRootPart")
+    return plr.Character
+end
+
+local char = getchar()
+local hrp = char.HumanoidRootPart
+
+local gui = Instance.new("ScreenGui")
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.Parent = plr:WaitForChild("PlayerGui")
+
+local background = Instance.new("Frame", gui)
+background.Size = UDim2.fromScale(1, 1)
+background.BackgroundColor3 = Color3.fromRGB(40, 20, 40)
+background.BackgroundTransparency = 0.15
+
+local title = Instance.new("TextLabel", background)
+title.Size = UDim2.new(1, 0, 0, 80)
+title.Position = UDim2.new(0, 0, 0.3, 0)
+title.BackgroundTransparency = 1
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Text = "your slaps: (loading)"
+
+local subtitle = Instance.new("TextLabel", background)
+subtitle.Size = UDim2.new(1, 0, 0, 50)
+subtitle.Position = UDim2.new(0, 0, 0.42, 0)
+subtitle.BackgroundTransparency = 1
+subtitle.TextScaled = true
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextColor3 = Color3.fromRGB(220, 220, 220)
+subtitle.Text = "collecting all slapples and serverhopping"
+
+task.spawn(function()
+    while task.wait(0.5) do
+        local stats = plr:FindFirstChild("leaderstats")
+        if stats and stats:FindFirstChild("Slaps") then
+            title.Text = "your slaps: (" .. stats.Slaps.Value .. ")"
+        end
+    end
+end)
+
+task.spawn(function()
+    task.wait(1.5)
+    char = getchar()
+    hrp = char.HumanoidRootPart
+
+    if not char:FindFirstChild("entered") then
+        local attempts = 0
+        repeat
+            task.wait(0.2)
+            firetouchinterest(hrp, workspace.Lobby.Teleport1, 0)
+            firetouchinterest(hrp, workspace.Lobby.Teleport1, 1)
+            attempts = attempts + 1
+        until char:FindFirstChild("entered") or attempts > 15
+    end
+
+    task.wait(0.5)
+
+    if workspace:FindFirstChild("Arena") and workspace.Arena:FindFirstChild("island5") and workspace.Arena.island5:FindFirstChild("Slapples") then
+        for _, v in ipairs(workspace.Arena.island5.Slapples:GetDescendants()) do
+            if v.Name == "Glove" and v:FindFirstChildWhichIsA("TouchTransmitter") then
+                firetouchinterest(hrp, v, 0)
+                firetouchinterest(hrp, v, 1)
+            end
+        end
+    end
+
+    task.wait(1.5)
+    subtitle.Text = "hopping to new server"
+    if not hoppingstatus then
+        hop()
+    end
+end)
